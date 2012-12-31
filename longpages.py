@@ -1,6 +1,8 @@
+# -*- coding: utf-8 -*-
 #!/usr/bin/env python2.5
 
 # Copyright 2008 bjweeks, MZMcBride
+# 2012 DixonD-git
 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,12 +17,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
 import datetime
-import MySQLdb
-import wikitools
+import oursql
 import settings
+import wikipedia as pywikibot
+import login
 
-report_title = settings.rootpage + 'Long pages'
+report_title = settings.rootpage + u'Довгі сторінки'
 
 report_template = u'''
 Long pages; data as of <onlyinclude>%s</onlyinclude>.
@@ -53,11 +57,16 @@ All pages whose page length is greater than 500,000 bytes.
 |}
 '''
 
-wiki = wikitools.Wiki(settings.apiurl)
-wiki.login(settings.username, settings.password)
+site = pywikibot.Site(code = settings.sitecode)
+login.LoginManager(username=settings.username, password=settings.password, site = site).login()
 
-conn = MySQLdb.connect(host=settings.host, db=settings.dbname, read_default_file='~/.my.cnf')
-cursor = conn.cursor()
+db = oursql.connect(db=settings.dbname,
+    host=settings.host,
+    read_default_file=os.path.expanduser("~/.my.cnf"),
+    charset=None,
+    use_unicode=False)
+
+cursor = db.cursor()
 cursor.execute('''
 /* longpages.py SLOW_OK */
 SELECT
@@ -145,10 +154,10 @@ cursor.execute('SELECT UNIX_TIMESTAMP() - UNIX_TIMESTAMP(rc_timestamp) FROM rece
 rep_lag = cursor.fetchone()[0]
 current_of = (datetime.datetime.utcnow() - datetime.timedelta(seconds=rep_lag)).strftime('%H:%M, %d %B %Y (UTC)')
 
-report = wikitools.Page(wiki, report_title)
+report = pywikibot.Page(site = site, title = report_title)
 report_text = report_template % (current_of, '\n'.join(output1), '\n'.join(output2))
 report_text = report_text.encode('utf-8')
-report.edit(report_text, summary=settings.editsumm, bot=1)
+report.put(report_text, comment = settings.editsumm)
 
 cursor.close()
-conn.close()
+db.close()
