@@ -105,10 +105,10 @@ for row in cursor.fetchall():
         page_title = u'{{{{dbr link|1={0}}}}}'.format(page_title)
     page_len = row[2]
     rev_timestamp = row[3]
-    table_row = u'''| {}
-| {}
-| {}
-| {}
+    table_row = u'''| {0}
+| {1}
+| {2}
+| {3}
 |-'''.format(i, page_title, page_len, rev_timestamp)
     output1.append(table_row)
     i += 1
@@ -145,10 +145,10 @@ for row in cursor.fetchall():
         page_title = u'{{{{dbr link|1={0}}}}}'.format(page_title)
     page_len = row[2]
     rev_timestamp = row[3]
-    table_row = u'''| {}
-| {}
-| {}
-| {}
+    table_row = u'''| {0}
+| {1}
+| {2}
+| {3}
 |-'''.format(i, page_title, page_len, rev_timestamp)
     output2.append(table_row)
     i += 1
@@ -161,6 +161,12 @@ current_of = (datetime.datetime.utcnow() - datetime.timedelta(seconds=rep_lag)).
 report = pywikibot.Page(site = site, title = report_title)
 report_text = report_template.format(unicode(current_of, 'utf-8'), u'\n'.join(output1), u'\n'.join(output2))
 report.put(report_text, comment = settings.editsumm)
+
+with open(__file__, 'r') as f:
+    sourceCode = f.read()
+
+report_source = pywikibot.Page(site = site, title = report_title + settings.sourcepage)
+report_source.put(sourceCode, comment=settings.editsourcesumm)
 
 cursor.close()
 db.close()
