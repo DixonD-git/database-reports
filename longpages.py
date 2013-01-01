@@ -129,7 +129,7 @@ AND rev_timestamp = (SELECT
                      FROM revision
                      WHERE rev_page = page_id)
 ORDER BY page_len, page_namespace ASC;
-''' , settings.dbname)
+''' % settings.dbname)
 
 i = 1
 output2 = []
