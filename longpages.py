@@ -166,6 +166,8 @@ report.put(report_text, comment = settings.editsumm)
 with codecs.open(__file__, 'r', 'utf8') as f:
     sourceCode = f.read()
 
+sourceCode = u'<div style="overflow:auto;">\n<source lang="python">\n' + sourceCode + u'\n</source>\n</div>'
+
 report_source = pywikibot.Page(site = site, title = report_title + settings.sourcepage)
 report_source.put(sourceCode, comment=settings.editsourcesumm)
 
