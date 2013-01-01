@@ -38,10 +38,10 @@ report_template = u'''
 
 {{| class="wikitable sortable plainlinks" style="width:100%%; margin:auto;"
 |- style="white-space:nowrap;"
-! No.
-! Page
-! Length
-! Last edit
+! №
+! Сторінка
+! Довжина
+! Останнє редагування
 |-
 {1}
 |}}
@@ -51,10 +51,10 @@ report_template = u'''
 
 {{| class="wikitable sortable plainlinks" style="width:100%%; margin:auto;"
 |- style="white-space:nowrap;"
-! No.
-! Page
-! Length
-! Last edit
+! №
+! Сторінка
+! Довжина
+! Останнє редагування
 |-
 {2}
 |}}
