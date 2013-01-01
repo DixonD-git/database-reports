@@ -156,7 +156,6 @@ current_of = (datetime.datetime.utcnow() - datetime.timedelta(seconds=rep_lag)).
 
 report = pywikibot.Page(site = site, title = report_title)
 report_text = report_template % (current_of, '\n'.join(output1), '\n'.join(output2))
-report_text = report_text.encode('utf-8')
 report.put(report_text, comment = settings.editsumm)
 
 cursor.close()
