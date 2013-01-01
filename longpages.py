@@ -24,6 +24,7 @@ import settings
 import wikipedia as pywikibot
 import login
 import locale
+import codecs
 
 locale.setlocale(locale.LC_ALL, '')
 
@@ -162,7 +163,7 @@ report = pywikibot.Page(site = site, title = report_title)
 report_text = report_template.format(unicode(current_of, 'utf-8'), u'\n'.join(output1), u'\n'.join(output2))
 report.put(report_text, comment = settings.editsumm)
 
-with open(__file__, 'r') as f:
+with codecs.open(__file__, 'r', 'utf8') as f:
     sourceCode = f.read()
 
 report_source = pywikibot.Page(site = site, title = report_title + settings.sourcepage)
