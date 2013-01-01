@@ -77,7 +77,7 @@ SELECT
 FROM page
 JOIN toolserver.namespace
 ON page_namespace = ns_id
-AND dbname = %s
+AND dbname = "%s"
 JOIN revision
 ON rev_page = page_id
 WHERE page_len > 140000
@@ -89,7 +89,7 @@ AND rev_timestamp = (SELECT
                      FROM revision
                      WHERE rev_page = page_id)
 ORDER BY page_len, page_namespace ASC;
-''' , settings.dbname)
+''' % settings.dbname)
 
 i = 1
 output1 = []
@@ -120,7 +120,7 @@ SELECT
 FROM page
 JOIN toolserver.namespace
 ON page_namespace = ns_id
-AND dbname = %s
+AND dbname = "%s"
 JOIN revision
 ON rev_page = page_id
 WHERE page_len > 500000
