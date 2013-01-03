@@ -24,7 +24,7 @@ def uploadSourceCode(fileName, reportTitle, site):
     with codecs.open(fileName, 'r', 'utf8') as f:
         sourceCode = f.read()
 
-    sourceCode = u'== {0} ==\n<div style="overflow:auto;">\n<source lang="python">\n{0}\n</source>\n</div>'.format(
+    sourceCode = u'== {0} ==\n<div style="overflow:auto;">\n<source lang="python">\n{1}\n</source>\n</div>'.format(
         fileName, sourceCode)
 
     reportSourcePage = pywikibot.Page(site = site, title = reportTitle + settings.sourcepage)
