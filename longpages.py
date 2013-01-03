@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/env python2.7
 
-# Copyright 2008 bjweeks, MZMcBride, DixonD-git
+# Copyright 2008-2013 bjweeks, MZMcBride, DixonD-git
 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
