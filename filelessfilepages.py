@@ -1,6 +1,7 @@
-#!/usr/bin/env python2.5
+# -*- coding: utf-8 -*-
+#!/usr/bin/env python2.7
 
-# Copyright 2009 bjweeks, MZMcBride
+# Copyright 2009 bjweeks, MZMcBride, DixonD-git
 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,30 +16,41 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
 import datetime
-import MySQLdb
-import wikitools
+import oursql
 import settings
+import wikipedia as pywikibot
+import login
+import locale
+import common
 
-report_title = settings.rootpage + 'File description pages without an associated file'
+locale.setlocale(locale.LC_ALL, '')
+
+report_title = settings.rootpage + u'Сторінки описів файлів без відповідного файлу'
 
 report_template = u'''
-File description pages without an associated file; data as of <onlyinclude>%s</onlyinclude>.
+Сторінки описів файлів без відповідного файлу; дані станом на <onlyinclude>{0}</onlyinclude>.
 
-{| class="wikitable sortable plainlinks" style="width:100%%; margin:auto;"
+{{| class="wikitable sortable plainlinks" style="width:100%%; margin:auto;"
 |- style="white-space:nowrap;"
-! No.
-! Page
+! №
+! Сторінка
 |-
-%s
-|}
+{1}
+|}}
 '''
 
-wiki = wikitools.Wiki(settings.apiurl)
-wiki.login(settings.username, settings.password)
+site = pywikibot.Site(code = settings.sitecode)
+login.LoginManager(username=settings.username, password=settings.password, site = site).login()
 
-conn = MySQLdb.connect(host=settings.host, db=settings.dbname, read_default_file='~/.my.cnf')
-cursor = conn.cursor()
+db = oursql.connect(db=settings.dbname,
+    host=settings.host,
+    read_default_file=os.path.expanduser("~/.my.cnf"),
+    charset=None,
+    use_unicode=False)
+
+cursor = db.cursor()
 cursor.execute('''
 /* filelessfilepages.py SLOW_OK */
 SELECT
@@ -46,7 +58,7 @@ SELECT
   pg1.page_title
 FROM page AS pg1
 JOIN toolserver.namespace
-ON dbname = %s
+ON dbname = "{0}"
 AND pg1.page_namespace = ns_id
 WHERE NOT EXISTS (SELECT
                     img_name
@@ -64,15 +76,15 @@ AND NOT EXISTS (SELECT
                 AND pg2.page_is_redirect = 1)
 AND pg1.page_namespace = 6
 AND pg1.page_is_redirect = 0;
-''' , settings.dbname)
+'''.format(settings.dbname))
 
 i = 1
 output = []
 for row in cursor.fetchall():
-    page_title = '[[:%s:%s|]]' % (unicode(row[0], 'utf-8'), unicode(row[1], 'utf-8'))
-    table_row = u'''| %d
-| %s
-|-''' % (i, page_title)
+    page_title = u'[[:{0}:{1}|]]'.format(unicode(row[0], 'utf-8'), unicode(row[1], 'utf-8'))
+    table_row = u'''| {0}
+| {1}
+|-'''.format(i, page_title)
     output.append(table_row)
     i += 1
 
@@ -80,10 +92,11 @@ cursor.execute('SELECT UNIX_TIMESTAMP() - UNIX_TIMESTAMP(rc_timestamp) FROM rece
 rep_lag = cursor.fetchone()[0]
 current_of = (datetime.datetime.utcnow() - datetime.timedelta(seconds=rep_lag)).strftime('%H:%M, %d %B %Y (UTC)')
 
-report = wikitools.Page(wiki, report_title)
-report_text = report_template % (current_of, '\n'.join(output))
-report_text = report_text.encode('utf-8')
-report.edit(report_text, summary=settings.editsumm, bot=1)
+report = pywikibot.Page(site = site, title = report_title)
+report_text = report_template.format(unicode(current_of, 'utf-8'), u'\n'.join(output))
+report.put(report_text, comment = settings.editsumm)
+
+common.uploadSourceCode(__file__, report_title, site)
 
 cursor.close()
-conn.close()
+db.close()
