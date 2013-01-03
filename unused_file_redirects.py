@@ -1,6 +1,7 @@
-#!/usr/bin/env python2.5
+# -*- coding: utf-8 -*-
+#!/usr/bin/env python2.7
  
-# Copyright 2009-2010 bjweeks, MZMcBride, svick
+# Copyright 2009-2013 bjweeks, MZMcBride, svick, DixonD-git
  
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,36 +15,46 @@
  
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
- 
+
+import os
 import datetime
-import MySQLdb
-import wikitools
+import oursql
 import settings
+import wikipedia as pywikibot
+import login
+import locale
+import common
+
+locale.setlocale(locale.LC_ALL, '')
  
-report_title = settings.rootpage + 'Unused file redirects'
+report_title = settings.rootpage + u'Перенаправлення файлів, що не використовуються'
  
 report_template = u'''
-Below is a list of File redirects that have at most one incoming link; data as of <onlyinclude>%s</onlyinclude>.
+Перенаправлення файлів, на які є щонайбільше одне посилання; дані станом на <onlyinclude>{0}</onlyinclude>.
  
-{| class="wikitable sortable plainlinks"
+{{| class="wikitable sortable plainlinks"
 |-
-! No.
-! Page
-! Image links
-! Links
+! №
+! Сторінка
+! Використання файлу
+! Посилання
 |-
-%s
-|}
+{1}
+|}}
 '''
- 
-wiki = wikitools.Wiki(settings.apiurl)
-wiki.login(settings.username, settings.password)
- 
-conn = MySQLdb.connect(host=settings.host, db=settings.dbname, read_default_file='~/.my.cnf')
-cursor = conn.cursor()
+
+site = pywikibot.Site(code = settings.sitecode)
+login.LoginManager(username=settings.username, password=settings.password, site = site).login()
+
+db = oursql.connect(db=settings.dbname,
+    host=settings.host,
+    read_default_file=os.path.expanduser("~/.my.cnf"),
+    charset=None,
+    use_unicode=False)
+cursor = db.cursor()
 cursor.execute('''
 /* unused_file_redirects.py */
-SELECT page_title,
+SELECT ns_name, pg1.page_title,
   (SELECT COUNT(*)
   FROM imagelinks
   WHERE il_to = page_title) AS imagelinks,
@@ -51,34 +62,39 @@ SELECT page_title,
   FROM pagelinks
   WHERE pl_namespace = 6
     AND pl_title = page_title) AS links
-FROM page
-WHERE page_namespace = 6
-  AND page_is_redirect = 1
+FROM page AS pg1
+JOIN toolserver.namespace
+ON dbname = "{0}"
+AND pg1.page_namespace = ns_id
+WHERE pg1.page_namespace = 6
+  AND pg1.page_is_redirect = 1
 HAVING imagelinks + links <= 1
-''')
+'''.format(settings.dbname))
  
 i = 1
 output = []
 for row in cursor.fetchall():
-    page_title = '<span class="plainlinks">[{{fullurl:File:%s|redirect=no}} %s]</span>' % (unicode(row[0], 'utf-8'), unicode(row[0], 'utf-8'))
-    imagelinks = row[1]
-    links = row[2]
-    table_row = u'''| %d
-| %s
-| %d
-| %d
-|-''' % (i, page_title, imagelinks, links)
+    page_title = u'<span class="plainlinks">[{{{{fullurl:{0}:{1}|redirect=no}}}} {2}]</span>'.format(
+        unicode(row[0], 'utf-8'), unicode(row[1], 'utf-8'), unicode(row[1], 'utf-8'))
+    imageLinks = row[2]
+    links = row[3]
+    table_row = u'''| {0}
+| {1}
+| {2}
+| {3}
+|-'''.format(i, page_title, imageLinks, links)
     output.append(table_row)
     i += 1
  
 cursor.execute('SELECT UNIX_TIMESTAMP() - UNIX_TIMESTAMP(rc_timestamp) FROM recentchanges ORDER BY rc_timestamp DESC LIMIT 1;')
 rep_lag = cursor.fetchone()[0]
 current_of = (datetime.datetime.utcnow() - datetime.timedelta(seconds=rep_lag)).strftime('%H:%M, %d %B %Y (UTC)')
- 
-report = wikitools.Page(wiki, report_title)
-report_text = report_template % (current_of, '\n'.join(output))
-report_text = report_text.encode('utf-8')
-report.edit(report_text, summary=settings.editsumm, bot=1)
- 
+
+report = pywikibot.Page(site = site, title = report_title)
+report_text = report_template.format(unicode(current_of, 'utf-8'), u'\n'.join(output))
+report.put(report_text, comment = settings.editsumm)
+
+common.uploadSourceCode(__file__, report_title, site)
+
 cursor.close()
-conn.close()
+db.close()
