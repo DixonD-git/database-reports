@@ -52,7 +52,7 @@ db = oursql.connect(db=settings.dbname,
     charset=None,
     use_unicode=False)
 cursor = db.cursor()
-cursor.execute('''
+cursor.execute(u'''
 /* templatesnonfree.py SLOW_OK */
 SELECT
   imgtmp.ns_name,
