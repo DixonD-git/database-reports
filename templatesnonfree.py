@@ -1,6 +1,7 @@
-#!/usr/bin/env python2.5
+# -*- coding: utf-8 -*-
+#!/usr/bin/env python2.7
 
-# Copyright 2008 bjweeks, MZMcBride
+# Copyright 2008-2013 bjweeks, MZMcBride, DixonD-git
 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,31 +16,42 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
 import datetime
-import MySQLdb
-import wikitools
+import oursql
 import settings
+import wikipedia as pywikibot
+import login
+import locale
+import common
 
-report_title = settings.rootpage + 'Templates containing non-free files'
+locale.setlocale(locale.LC_ALL, '')
+
+report_title = settings.rootpage + u'Шаблони, що включають невільні файли'
+non_free_media_category = u'Невільні файли'
 
 report_template = u'''
-Templates containing non-free files; data as of <onlyinclude>%s</onlyinclude>.
+Шаблони, що включають невільні файли; дані станом на <onlyinclude>{0}</onlyinclude>.
 
-{| class="wikitable sortable plainlinks" style="width:100%%; margin:auto;"
+{{| class="wikitable sortable plainlinks" style="width:100%%; margin:auto;"
 |- style="white-space:nowrap;"
-! No.
-! Template
-! Non-free files
+! №
+! Шаблон
+! Невільні файли
 |-
-%s
-|}
+{1}
+|}}
 '''
 
-wiki = wikitools.Wiki(settings.apiurl)
-wiki.login(settings.username, settings.password)
+site = pywikibot.Site(code = settings.sitecode)
+login.LoginManager(username=settings.username, password=settings.password, site = site).login()
 
-conn = MySQLdb.connect(host=settings.host, db=settings.dbname, read_default_file='~/.my.cnf')
-cursor = conn.cursor()
+db = oursql.connect(db=settings.dbname,
+    host=settings.host,
+    read_default_file=os.path.expanduser("~/.my.cnf"),
+    charset=None,
+    use_unicode=False)
+cursor = db.cursor()
 cursor.execute('''
 /* templatesnonfree.py SLOW_OK */
 SELECT
@@ -56,27 +68,28 @@ JOIN (SELECT
         il_to
       FROM page AS pg2
       JOIN toolserver.namespace
-      ON dbname = %s
+      ON dbname = "{0}"
       AND pg2.page_namespace = ns_id
       JOIN imagelinks
       ON il_from = page_id
       WHERE pg2.page_namespace = 10) AS imgtmp
 ON il_to = pg1.page_title
 WHERE pg1.page_namespace = 6
-AND cl_to = 'All_non-free_media'
+AND cl_to = '{1}'
 GROUP BY imgtmp.page_namespace, imgtmp.page_title
 ORDER BY COUNT(cl_to) ASC;
-''' , settings.dbname)
+'''.format(settings.dbname, non_free_media_category))
 
 i = 1
 output = []
 for row in cursor.fetchall():
-    page_title = u'[[%s:%s|%s]]' % (unicode(row[0], 'utf-8'), unicode(row[1], 'utf-8'), unicode(row[1], 'utf-8'))
+    page_title = u'[[{0}:{1}|{2}]]'.format(unicode(row[0], 'utf-8'), unicode(row[1], 'utf-8'),
+        unicode(row[1], 'utf-8'))
     count = row[2]
-    table_row = u'''| %d
-| %s
-| %s
-|-''' % (i, page_title, count)
+    table_row = u'''| {0}
+| {1}
+| {2}
+|-'''.format(i, page_title, count)
     output.append(table_row)
     i += 1
 
@@ -84,10 +97,11 @@ cursor.execute('SELECT UNIX_TIMESTAMP() - UNIX_TIMESTAMP(rc_timestamp) FROM rece
 rep_lag = cursor.fetchone()[0]
 current_of = (datetime.datetime.utcnow() - datetime.timedelta(seconds=rep_lag)).strftime('%H:%M, %d %B %Y (UTC)')
 
-report = wikitools.Page(wiki, report_title)
-report_text = report_template % (current_of, '\n'.join(output))
-report_text = report_text.encode('utf-8')
-report.edit(report_text, summary=settings.editsumm, bot=1)
+report = pywikibot.Page(site = site, title = report_title)
+report_text = report_template.format(unicode(current_of, 'utf-8'), u'\n'.join(output))
+report.put(report_text, comment = settings.editsumm)
+
+common.uploadSourceCode(__file__, report_title, site)
 
 cursor.close()
-conn.close()
+db.close()
