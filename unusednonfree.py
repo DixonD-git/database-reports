@@ -20,6 +20,7 @@ import common
 import settings
 
 report_name = u'Невільні файли, що не використовуються'
+
 non_free_media_category = u'Невільні_файли'
 
 report_template = u'''
@@ -38,25 +39,25 @@ sqlQuery = '''
 /* unusednonfree.py SLOW_OK */
 SELECT
   ns_name,
-  page_title,
-  COUNT(*)
-FROM imagelinks
-JOIN (SELECT
+  page_title
+FROM  (SELECT
         page_id,
         ns_name,
         page_title
       FROM page
       JOIN toolserver.namespace
-      ON dbname = "{0}"
+      ON dbname = "ukwiki_p"
       AND page_namespace = ns_id
       JOIN categorylinks
       ON cl_from = page_id
-      WHERE cl_to = "{1}"
-      AND page_namespace = 6) AS pgtmp
-ON pgtmp.page_title = il_to
-GROUP BY il_to
-HAVING COUNT(*) = 0
-ORDER BY COUNT(*) ASC;
+      WHERE cl_to = "Невільні_файли"
+      AND page_namespace = 6
+	  ) AS pgtmp
+WHERE NOT EXISTS
+  (SELECT 1
+   FROM   imagelinks
+   WHERE  pgtmp.page_title = il_to)
+ORDER BY page_title
 '''.format(settings.dbname, non_free_media_category.encode('utf-8'))
 
 site, db, cursor = common.prepareEnvironment()
