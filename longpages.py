@@ -16,18 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
-import datetime
-import oursql
 import settings
-import wikipedia as pywikibot
-import login
-import locale
 import common
 
-locale.setlocale(locale.LC_ALL, '')
-
-report_title = settings.rootpage + u'Довгі сторінки'
+report_name = u'Довгі сторінки'
 
 report_template = u'''
 Довгі сторінки; дані станом на <onlyinclude>{0}</onlyinclude>.
@@ -60,17 +52,7 @@ report_template = u'''
 |}}
 '''
 
-site = pywikibot.Site(code = settings.sitecode)
-login.LoginManager(username=settings.username, password=settings.password, site = site).login()
-
-db = oursql.connect(db=settings.dbname,
-    host=settings.host,
-    read_default_file=os.path.expanduser("~/.my.cnf"),
-    charset=None,
-    use_unicode=False)
-
-cursor = db.cursor()
-cursor.execute('''
+sqlQuery1 = '''
 /* longpages.py SLOW_OK */
 SELECT
   ns_name,
@@ -92,7 +74,32 @@ AND rev_timestamp = (SELECT
                      FROM revision
                      WHERE rev_page = page_id)
 ORDER BY page_len, page_namespace ASC;
-'''.format(settings.dbname))
+'''.format(settings.dbname)
+
+sqlQuery2 = '''
+/* longpages.py SLOW_OK */
+SELECT
+  ns_name,
+  page_title,
+  page_len,
+  rev_timestamp
+FROM page
+JOIN toolserver.namespace
+ON page_namespace = ns_id
+AND dbname = "{}"
+JOIN revision
+ON rev_page = page_id
+WHERE page_len > 500000
+AND rev_timestamp = (SELECT
+                       MAX(rev_timestamp)
+                     FROM revision
+                     WHERE rev_page = page_id)
+ORDER BY page_len, page_namespace ASC;
+'''.format(settings.dbname)
+
+site, db, cursor = common.prepareEnvironment()
+
+cursor.execute(sqlQuery1)
 
 i = 1
 output1 = []
@@ -113,26 +120,7 @@ for row in cursor.fetchall():
     output1.append(table_row)
     i += 1
 
-cursor.execute('''
-/* longpages.py SLOW_OK */
-SELECT
-  ns_name,
-  page_title,
-  page_len,
-  rev_timestamp
-FROM page
-JOIN toolserver.namespace
-ON page_namespace = ns_id
-AND dbname = "{}"
-JOIN revision
-ON rev_page = page_id
-WHERE page_len > 500000
-AND rev_timestamp = (SELECT
-                       MAX(rev_timestamp)
-                     FROM revision
-                     WHERE rev_page = page_id)
-ORDER BY page_len, page_namespace ASC;
-'''.format(settings.dbname))
+cursor.execute(sqlQuery2)
 
 i = 1
 output2 = []
@@ -153,16 +141,4 @@ for row in cursor.fetchall():
     output2.append(table_row)
     i += 1
 
-cursor.execute('SELECT UNIX_TIMESTAMP() - UNIX_TIMESTAMP(rc_timestamp) FROM recentchanges ORDER BY rc_timestamp DESC LIMIT 1;')
-rep_lag = cursor.fetchone()[0]
-
-current_of = (datetime.datetime.utcnow() - datetime.timedelta(seconds=rep_lag)).strftime('%H:%M, %d %B %Y (UTC)')
-
-report = pywikibot.Page(site = site, title = report_title)
-report_text = report_template.format(unicode(current_of, 'utf-8'), u'\n'.join(output1), u'\n'.join(output2))
-report.put(report_text, comment = settings.editsumm)
-
-common.uploadSourceCode(__file__, report_title, site)
-
-cursor.close()
-db.close()
+common.finishReport(db, cursor, site, report_name, report_template, [output1, output2], __file__)

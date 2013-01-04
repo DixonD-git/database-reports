@@ -16,18 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
-import datetime
-import oursql
 import settings
-import wikipedia as pywikibot
-import login
-import locale
 import common
 
-locale.setlocale(locale.LC_ALL, '')
- 
-report_title = settings.rootpage + u'Перенаправлення файлів, що не використовуються'
+report_name = u'Перенаправлення файлів, що не використовуються'
  
 report_template = u'''
 Перенаправлення файлів, на які є щонайбільше одне посилання; дані станом на <onlyinclude>{0}</onlyinclude>.
@@ -43,16 +35,7 @@ report_template = u'''
 |}}
 '''
 
-site = pywikibot.Site(code = settings.sitecode)
-login.LoginManager(username=settings.username, password=settings.password, site = site).login()
-
-db = oursql.connect(db=settings.dbname,
-    host=settings.host,
-    read_default_file=os.path.expanduser("~/.my.cnf"),
-    charset=None,
-    use_unicode=False)
-cursor = db.cursor()
-cursor.execute('''
+sqlQuery = '''
 /* unused_file_redirects.py */
 SELECT ns_name, pg1.page_title,
   (SELECT COUNT(*)
@@ -69,7 +52,11 @@ AND pg1.page_namespace = ns_id
 WHERE pg1.page_namespace = 6
   AND pg1.page_is_redirect = 1
 HAVING imagelinks + links <= 1
-'''.format(settings.dbname))
+'''.format(settings.dbname)
+
+site, db, cursor = common.prepareEnvironment()
+
+cursor.execute(sqlQuery)
  
 i = 1
 output = []
@@ -85,16 +72,5 @@ for row in cursor.fetchall():
 |-'''.format(i, page_title, imageLinks, links)
     output.append(table_row)
     i += 1
- 
-cursor.execute('SELECT UNIX_TIMESTAMP() - UNIX_TIMESTAMP(rc_timestamp) FROM recentchanges ORDER BY rc_timestamp DESC LIMIT 1;')
-rep_lag = cursor.fetchone()[0]
-current_of = (datetime.datetime.utcnow() - datetime.timedelta(seconds=rep_lag)).strftime('%H:%M, %d %B %Y (UTC)')
 
-report = pywikibot.Page(site = site, title = report_title)
-report_text = report_template.format(unicode(current_of, 'utf-8'), u'\n'.join(output))
-report.put(report_text, comment = settings.editsumm)
-
-common.uploadSourceCode(__file__, report_title, site)
-
-cursor.close()
-db.close()
+common.finishReport(db, cursor, site, report_name, report_template, [output], __file__)

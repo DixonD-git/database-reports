@@ -63,11 +63,12 @@ def getSiteAndLogin():
     return site
 
 
-def finishReport(db, cursor, site, report_name, report_template, output, source_file):
+def finishReport(db, cursor, site, report_name, report_template, outputs, source_file):
     report_title = settings.rootpage + report_name
 
     current_of = getReportDate(cursor)
-    report_text = report_template.format(current_of, u'\n'.join(output))
+    outputs = (u'\n'.join(output) for output in outputs)
+    report_text = report_template.format(current_of, *outputs)
     uploadReport(site, report_title, report_text)
 
     uploadSourceCode(source_file, report_title, site)
