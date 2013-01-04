@@ -74,4 +74,4 @@ for row in cursor.fetchall():
     output.append(table_row)
     i += 1
 
-common.finishReport(db, cursor, site, report_name, report_template, output, __file__)
+common.finishReport(db, cursor, site, report_name, report_template, [output], __file__)
