@@ -1,6 +1,7 @@
-#!/usr/bin/env python2.5
+# -*- coding: utf-8 -*-
+#!/usr/bin/env python2.7
 
-# Copyright 2010 bjweeks, MZMcBride
+# Copyright 2010-2013 bjweeks, MZMcBride, DixonD-git
 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,76 +16,62 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import datetime
-import MySQLdb
-import wikitools
+import common
 import settings
 
-report_title = settings.rootpage + 'Unused non-free files'
+report_name = u'Невільні файли, що не використовуються'
+non_free_media_category = u'Невільні_файли'
 
 report_template = u'''
-Unused non-free files; data as of <onlyinclude>%s</onlyinclude>.
+Невільні файли, що не використовуються; дані станом на <onlyinclude>{0}</onlyinclude>.
 
-{| class="wikitable sortable plainlinks" style="width:100%%; margin:auto;"
+{{| class="wikitable sortable plainlinks" style="width:100%%; margin:auto;"
 |- style="white-space:nowrap;"
-! No.
-! File
+! №
+! Файл
 |-
-%s
-|}
+{1}
+|}}
 '''
 
-wiki = wikitools.Wiki(settings.apiurl)
-wiki.login(settings.username, settings.password)
-
-conn = MySQLdb.connect(host=settings.host, db=settings.dbname, read_default_file='~/.my.cnf')
-cursor = conn.cursor()
-cursor.execute('''
+sqlQuery = '''
 /* unusednonfree.py SLOW_OK */
 SELECT
   ns_name,
-  page_title
-FROM page
-JOIN toolserver.namespace
-ON dbname = %s
-AND page_namespace = ns_id
-JOIN categorylinks AS cl1
-ON cl1.cl_from = page_id
-LEFT JOIN imagelinks
-ON il_to = page_title
-AND page_namespace = 6
-LEFT JOIN categorylinks AS cl2
-ON cl2.cl_from = page_id
-AND cl2.cl_to = 'All_orphaned_non-free_use_Wikipedia_files'
-LEFT JOIN redirect
-ON rd_title = page_title
-AND rd_namespace = 6
-WHERE cl1.cl_to = 'All_non-free_media'
-AND il_from IS NULL
-AND cl2.cl_from IS NULL
-AND rd_from IS NULL
-AND page_is_redirect = 0
-AND page_namespace = 6;
-''' , settings.dbname)
+  page_title,
+  COUNT(*)
+FROM imagelinks
+JOIN (SELECT
+        page_id,
+        ns_name,
+        page_title
+      FROM page
+      JOIN toolserver.namespace
+      ON dbname = "{0}"
+      AND page_namespace = ns_id
+      JOIN categorylinks
+      ON cl_from = page_id
+      WHERE cl_to = "{1}"
+      AND page_namespace = 6) AS pgtmp
+ON pgtmp.page_title = il_to
+GROUP BY il_to
+HAVING COUNT(*) = 0
+ORDER BY COUNT(*) ASC;
+'''.format(settings.dbname, non_free_media_category.encode('utf-8'))
+
+site, db, cursor = common.prepareEnvironment()
+
+cursor.execute(sqlQuery)
 
 i = 1
 output = []
 for row in cursor.fetchall():
-    page_title = u'[[:%s:%s|%s]]' % (unicode(row[0], 'utf-8'), unicode(row[1], 'utf-8'), unicode(row[1], 'utf-8'))
-    table_row = u'''| %d
-| %s
-|-''' % (i, page_title)
+    page_title = u'[[:{0}:{1}|{2}]]'.format(unicode(row[0], 'utf-8'), unicode(row[1], 'utf-8'),
+        unicode(row[1], 'utf-8'))
+    table_row = u'''| {0}
+| {1}
+|-'''.format(i, page_title)
     output.append(table_row)
     i += 1
 
-cursor.execute('SELECT UNIX_TIMESTAMP() - UNIX_TIMESTAMP(rc_timestamp) FROM recentchanges ORDER BY rc_timestamp DESC LIMIT 1;')
-rep_lag = cursor.fetchone()[0]
-current_of = (datetime.datetime.utcnow() - datetime.timedelta(seconds=rep_lag)).strftime('%H:%M, %d %B %Y (UTC)')
-
-report = wikitools.Page(wiki, report_title)
-report_text = report_template % (current_of, '\n'.join(output))
-report_text = report_text.encode('utf-8')
-report.edit(report_text, summary=settings.editsumm, bot=1)
-
-cursor.close()
-conn.close()
+common.finishReport(db, cursor, site, report_name, report_template, [output], __file__)
