@@ -52,7 +52,7 @@ db = oursql.connect(db=settings.dbname,
     charset=None,
     use_unicode=False)
 cursor = db.cursor()
-cursor.execute(u'''
+cursor.execute('''
 /* templatesnonfree.py SLOW_OK */
 SELECT
   imgtmp.ns_name,
@@ -75,10 +75,10 @@ JOIN (SELECT
       WHERE pg2.page_namespace = 10) AS imgtmp
 ON il_to = pg1.page_title
 WHERE pg1.page_namespace = 6
-AND cl_to = '{1}'
+AND cl_to = "{1}"
 GROUP BY imgtmp.page_namespace, imgtmp.page_title
 ORDER BY COUNT(cl_to) ASC;
-'''.format(settings.dbname, non_free_media_category))
+'''.format(settings.dbname, non_free_media_category.encode('utf-8')))
 
 i = 1
 output = []
