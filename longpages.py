@@ -73,7 +73,7 @@ AND rev_timestamp = (SELECT
                        MAX(rev_timestamp)
                      FROM revision
                      WHERE rev_page = page_id)
-ORDER BY page_len, page_namespace ASC;
+ORDER BY page_len DESC, page_namespace ASC;
 '''.format(settings.dbname)
 
 sqlQuery2 = '''
@@ -94,7 +94,7 @@ AND rev_timestamp = (SELECT
                        MAX(rev_timestamp)
                      FROM revision
                      WHERE rev_page = page_id)
-ORDER BY page_len, page_namespace ASC;
+ORDER BY page_len DESC, page_namespace ASC;
 '''.format(settings.dbname)
 
 site, db, cursor = common.prepareEnvironment()
