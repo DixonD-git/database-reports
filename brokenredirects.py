@@ -66,11 +66,11 @@ for row in cursor.fetchall():
     redirect_target = unicode(row[3], 'utf-8')
     page_namespace = row[0]
     if page_namespace == 6 or page_namespace == 14:
-        page_title = ':{0}:{1}'.format(ns_name, page_title)
-    elif ns_name:
-        page_title = '{0}:{1}'.format(ns_name, page_title)
+        page_title = u':{0}:{1}'.format(ns_name, page_title)
+    elif ns_name > 0:
+        page_title = u'{0}:{1}'.format(ns_name, page_title)
     else:
-        page_title = '{0}'.format(page_title)
+        page_title = u'{0}'.format(page_title)
     table_row = u'''|-
 | {0}
 | [[{1}]]
