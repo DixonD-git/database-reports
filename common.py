@@ -30,7 +30,7 @@ def uploadSourceCode(fileName, reportTitle, site):
         sourceCode = f.read()
 
     sourceCode = u'== {0} ==\n<div style="overflow:auto;">\n<source lang="python">\n{1}\n</source>\n</div>'.format(
-        fileName, sourceCode)
+        os.path.basename(fileName), sourceCode)
 
     reportSourcePage = pywikibot.Page(site = site, title = reportTitle + settings.sourcepage)
     reportSourcePage.put(sourceCode, comment = settings.editsourcesumm)
