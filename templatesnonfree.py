@@ -60,7 +60,7 @@ ON il_to = pg1.page_title
 WHERE pg1.page_namespace = 6
 AND cl_to = "{1}"
 GROUP BY imgtmp.page_namespace, imgtmp.page_title
-ORDER BY COUNT(cl_to) ASC;
+ORDER BY COUNT(cl_to) DESC, imgtmp.page_title ASC;
 '''.format(settings.dbname, non_free_media_category.encode('utf-8'))
 
 site, db, cursor = common.prepareEnvironment()
