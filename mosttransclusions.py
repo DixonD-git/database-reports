@@ -1,6 +1,7 @@
-#!/usr/bin/env python2.5
+# -*- coding: utf-8 -*-
+#!/usr/bin/env python2.7
 
-# Copyright 2008 bjweeks, MZMcBride
+# Copyright 2008-2013 bjweeks, MZMcBride, DixonD-git
 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,64 +16,56 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import datetime
-import MySQLdb
-import wikitools
+import common
 import settings
 
-report_title = settings.rootpage + 'Templates transcluded on the most pages'
+report_name = u'Шаблони, що мають найбільше включень'
 
 report_template = u'''
-Templates with the most transclusions (limited to the first 3000 entries); data as of <onlyinclude>%s</onlyinclude>.
+Шаблони, що мають найбільше включень (не більше 2000 записів); дані станом на <onlyinclude>{0}</onlyinclude>.
 
-{| class="wikitable sortable" style="width:100%%; margin:auto;"
+{{| class="wikitable sortable" style="width:100%%; margin:auto;"
 |- style="white-space:nowrap;"
-! No.
-! Template
-! Uses
+! №
+! Шаблон
+! Використання
 |-
-%s
-|}
+{1}
+|}}
 '''
 
-wiki = wikitools.Wiki(settings.apiurl)
-wiki.login(settings.username, settings.password)
-
-conn = MySQLdb.connect(host=settings.host, db=settings.dbname, read_default_file='~/.my.cnf')
-cursor = conn.cursor()
-cursor.execute('''
+sqlQuery = '''
 /* mosttransclusions.py SLOW_OK */
 SELECT
+  ns_name,
   tl_title,
   COUNT(*)
 FROM templatelinks
+JOIN toolserver.namespace
+      ON dbname = "{0}"
+      AND ns_id = tl_namespace
 WHERE tl_namespace = 10
 GROUP BY tl_title
 ORDER BY COUNT(*) DESC
-LIMIT 3000;
-''')
+LIMIT 2000;
+'''.format(settings.dbname)
+
+site, db, cursor = common.prepareEnvironment()
+
+cursor.execute(sqlQuery)
 
 i = 1
 output = []
 for row in cursor.fetchall():
-    tl_title = u'%s' % unicode(row[0], 'utf-8')
-    tl_title = u'[[Template:%s|%s]]' % (tl_title, tl_title)
-    uses = row[1]
-    table_row = u'''| %d
-| %s
-| %s
-|-''' % (i, tl_title, uses)
+    tl_namespace = unicode(row[0], 'utf-8')
+    tl_title = unicode(row[1], 'utf-8')
+    tl_title = u'[[{0}:{1}|{2}]]'.format(tl_namespace, tl_title, tl_title)
+    uses = row[2]
+    table_row = u'''| {0}
+| {1}
+| {2}
+|-'''.format(i, tl_title, uses)
     output.append(table_row)
     i += 1
 
-cursor.execute('SELECT UNIX_TIMESTAMP() - UNIX_TIMESTAMP(rc_timestamp) FROM recentchanges ORDER BY rc_timestamp DESC LIMIT 1;')
-rep_lag = cursor.fetchone()[0]
-current_of = (datetime.datetime.utcnow() - datetime.timedelta(seconds=rep_lag)).strftime('%H:%M, %d %B %Y (UTC)')
-
-report = wikitools.Page(wiki, report_title)
-report_text = report_template % (current_of, '\n'.join(output))
-report_text = report_text.encode('utf-8')
-report.edit(report_text, summary=settings.editsumm, bot=1)
-
-cursor.close()
-conn.close()
+common.finishReport(db, cursor, site, report_name, report_template, [output], __file__)
