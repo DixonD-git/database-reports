@@ -39,7 +39,7 @@ report_template = u'''
 |}}
 
 == Всі сторінки ==
-Всі сторінки, довжина яких перевищує 300 000 байтів.
+Всі сторінки, довжина яких перевищує 400 000 байтів.
 
 {{| class="wikitable sortable plainlinks" style="width:100%%; margin:auto;"
 |- style="white-space:nowrap;"
@@ -89,7 +89,7 @@ ON page_namespace = ns_id
 AND dbname = "{}"
 JOIN revision
 ON rev_page = page_id
-WHERE page_len > 300000
+WHERE page_len > 400000
 AND rev_timestamp = (SELECT
                        MAX(rev_timestamp)
                      FROM revision
