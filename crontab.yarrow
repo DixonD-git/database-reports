@@ -1,0 +1,8 @@
+PATH=/usr/bin:/bin:/sge/GE/bin/linux-x64
+SHELL=/bin/dash
+
+# INSTRUCTIONS
+# MIN HOUR DAYMONTH MONTH DAYWEEK
+
+# STATISTICS
+0 5 28 * * /usr/bin/time -f 'Command: \%C\nMemory: \%M\nTime: \%E' $HOME/bin/mostrevisions.py

@@ -1,0 +1,95 @@
+PATH=/opt/ts/gnu/bin:/sge/GE/bin/sol-amd64:/usr/bin:/bin
+SHELL=/bin/bash
+
+# INSTRUCTIONS
+# MIN HOUR DAYMONTH MONTH DAYWEEK
+
+# ARTICLES
+0 19 6 * * qcronsub -b y -j y -l arch=lx -l h_rt=2:50:00 -l virtual_free=70M -l sql-s1-rr=1 -N general.deletedfilesinarticles -o ~/var/log ~/bin/dbreps -r general.deletedfilesinarticles -s enwiki
+50 2 * * 6 qcronsub -b y -j y -l arch=lx -l h_rt=2:40:00 -l virtual_free=110M -l sql-s1-rr=1 -N enwiki.bullshitparams -o ~/var/log ~/bin/dbreps -r enwiki.bullshitparams -s enwiki
+#0 12 * * 4 qcronsub -b y -j y -l arch=lx -l h_rt=1:55:00 -l virtual_free=550M -l sql-s1-rr=1 -o ~/var/log ~/bin/coordoverlap.py
+0 12 6 * * qcronsub -b y -j y -l arch=lx -l h_rt=1:05:00 -l virtual_free=90M -l sql-s1-rr=1 -o ~/var/log ~/bin/redlinkedfilesinarticles.py
+30 19 * * 4 qcronsub -b y -j y -l arch=lx -l h_rt=0:20:00 -l virtual_free=530M -l sql-s1-rr=1 -N enwiki.unbelievablelifespans -o ~/var/log ~/bin/dbreps -r enwiki.unbelievablelifespans -s enwiki
+
+# BIOGRAPHIES OF DEAD PEOPLE
+35 0 * * 4 qcronsub -b y -j y -l arch=lx -l h_rt=0:40:00 -l virtual_free=60M -l sql-s1-rr=1 -o ~/var/log ~/bin/potenshbdps2.py
+
+# BIOGRAPHIES OF LIVING PEOPLE
+10 1 * * 5 qcronsub -b y -j y -l arch=lx -l h_rt=3:25:00 -l virtual_free=2070M -l sql-s1-rr=1 -N enwiki.potenshblps4 -o ~/var/log ~/bin/dbreps -r enwiki.potenshblps4 -s enwiki
+
+# CATEGORIES
+0 12 * * 5 qcronsub -b y -j y -l arch=lx -l h_rt=1:00:00 -l virtual_free=120M -l sql-s1-rr=1 -N general.deletedredlinkedcats -o ~/var/log ~/bin/dbreps -r general.deletedredlinkedcats -s enwiki
+0 2 * * 2 qcronsub -b y -j y -l arch=lx -l h_rt=0:10:00 -l virtual_free=60M -l sql-s1-rr=1 -N enwiki.polltemps -o ~/var/log ~/bin/dbreps -r enwiki.polltemps -s enwiki
+
+# FILES
+10 10 * * 6 qcronsub -b y -j y -l arch=lx -l h_rt=3:25:00 -l virtual_free=60M -l sql-s1-rr=1 -o ~/var/log ~/bin/templatelessfilepages.py
+40 10 * * 6 qcronsub -b y -j y -l arch=lx -l h_rt=3:00:00 -l virtual_free=200M -l sql-s1-rr=1 -N general.catandtemplessfilepages -o ~/var/log ~/bin/dbreps -r general.catandtemplessfilepages -s enwiki
+20 12 * * 6 qcronsub -b y -j y -l arch=lx -l h_rt=0:15:00 -l virtual_free=60M -l sql-s1-rr=1 -N general.filelessfilepages -o ~/var/log ~/bin/dbreps -r general.filelessfilepages -s enwiki
+20 13 * * 6 qcronsub -b y -j y -l arch=lx -l h_rt=0:25:00 -l virtual_free=60M -l sql-s1-rr=1 -N enwiki.conflictedfiles -o ~/var/log ~/bin/dbreps -r enwiki.conflictedfiles -s enwiki
+20 12 * * 6 qcronsub -b y -j y -l arch=lx -l h_rt=0:15:00 -l virtual_free=60M -l sql-s1-rr=1 -N enwiki.largenonfree -o ~/var/log ~/bin/dbreps -r enwiki.largenonfree -s enwiki
+0 12 * * 6 qcronsub -b y -j y -l arch=lx -l h_rt=0:55:00 -l virtual_free=60M -l sql-s1-rr=1 -N enwiki.mistaggedfiles -o ~/var/log ~/bin/dbreps -r enwiki.mistaggedfiles -s enwiki
+20 18 * * * qcronsub -b y -j y -l arch=lx -l h_rt=0:25:00 -l virtual_free=60M -l sql-s1-rr=1 -o ~/var/log ~/bin/nonfreemissingrat.py
+5 12 * * 6 qcronsub -b y -j y -l arch=lx -l h_rt=0:25:00 -l virtual_free=60M -l sql-s1-rr=1 -N enwiki.templatesnonfree -o ~/var/log ~/bin/dbreps -r enwiki.templatesnonfree -s enwiki
+10 12 * * 6 qcronsub -b y -j y -l arch=lx -l h_rt=1:55:00 -l virtual_free=60M -l sql-s1-rr=1 -N enwiki.pageslotnonfree -o ~/var/log ~/bin/dbreps -r enwiki.pageslotnonfree -s enwiki
+15 12 * * 6 qcronsub -b y -j y -l arch=lx -l h_rt=0:15:00 -l virtual_free=60M -l sql-s1-rr=1 -N enwiki.overusednonfree -o ~/var/log ~/bin/dbreps -r enwiki.overusednonfree -s enwiki
+0 3 * * * qcronsub -b y -j y -l arch=lx -l h_rt=0:15:00 -l virtual_free=60M -l sql-s1-rr=1 -N enwiki.unusednonfree -o ~/var/log ~/bin/dbreps -r enwiki.unusednonfree -s enwiki
+
+# PAGES
+0 18 * * 5 qcronsub -b y -j y -l arch=lx -l h_rt=0:45:00 -l virtual_free=120M -l sql-s1-rr=1 -N general.blankpages -o ~/var/log ~/bin/dbreps -r general.blankpages -s enwiki
+0 18 * * 6 qcronsub -b y -j y -l arch=lx -l h_rt=0:10:00 -l virtual_free=70M -l sql-s1-rr=1 -o ~/var/log ~/bin/longpages.py
+5 18 * * 6 qcronsub -b y -j y -l arch=lx -l h_rt=0:10:00 -l virtual_free=60M -l sql-s1-rr=1 -N enwiki.olddeletiondiscussions -o ~/var/log ~/bin/dbreps -r enwiki.olddeletiondiscussions -s enwiki
+0 18 * * 3 qcronsub -b y -j y -l arch=lx -l h_rt=0:20:00 -l virtual_free=70M -l sql-s1-rr=1 -N general.orphanedprojs -o ~/var/log ~/bin/dbreps -r general.orphanedprojs -s enwiki
+0 6 * * 1,5 qcronsub -b y -j y -l arch=lx -l h_rt=0:05:00 -l virtual_free=140M -l sql-s1-rr=1 -o ~/var/log ~/bin/orphanedtalks.py
+0 6 * * 1 qcronsub -b y -j y -l arch=lx -l h_rt=0:10:00 -l virtual_free=60M -l sql-s1-rr=1 -N enwiki.orphanedsubtalks -o ~/var/log ~/bin/dbreps -r enwiki.orphanedsubtalks -s enwiki
+0 12 * * 6 qcronsub -b y -j y -l arch=lx -l h_rt=0:25:00 -l virtual_free=60M -l sql-s1-rr=1 -o ~/var/log ~/bin/ownerlessuserpages.py
+10 18 * * 5 qcronsub -b y -j y -l arch=lx -l h_rt=0:45:00 -l virtual_free=150M -l sql-s1-rr=1 -N general.shortpages -o ~/var/log ~/bin/dbreps -r general.shortpages -s enwiki
+0 12 10 * * qcronsub -b y -j y -l arch=lx -l h_rt=0:40:00 -l virtual_free=60M -l sql-s1-rr=1 -N general.redlinkedfilesintemplates -o ~/var/log ~/bin/dbreps -r general.redlinkedfilesintemplates -s enwiki
+
+# PROTECTIONS
+35 0 * * 4 qcronsub -b y -j y -l arch=lx -l h_rt=0:30:00 -l virtual_free=80M -l sql-s1-rr=1 -o ~/var/log ~/bin/indeffullarticles.py
+45 0 * * 4 qcronsub -b y -j y -l arch=lx -l h_rt=0:15:00 -l virtual_free=60M -l sql-s1-rr=1 -N general.indeffulltalks -o ~/var/log ~/bin/dbreps -r general.indeffulltalks -s enwiki
+6 12 7 * * qcronsub -b y -j y -l arch=lx -l h_rt=2:30:00 -l virtual_free=80M -l sql-s1-rr=1 -N general.protlowtemps -o ~/var/log ~/bin/dbreps -r general.protlowtemps -s enwiki
+40 0 * * 4 qcronsub -b y -j y -l arch=lx -l h_rt=0:20:00 -l virtual_free=70M -l sql-s1-rr=1 -o ~/var/log ~/bin/indefsemitalks.py
+
+# REDIRECTS
+30 23 * * * qcronsub -b y -j y -l arch=lx -l h_rt=0:20:00 -l virtual_free=60M -l sql-s1-rr=1 -N general.brokenredirects -o ~/var/log ~/bin/dbreps -r general.brokenredirects -s enwiki
+45 9 * * * qcronsub -b y -j y -l arch=lx -l h_rt=0:20:00 -l virtual_free=90M -l sql-s1-rr=1 -o ~/var/log ~/bin/brokensectionanchors.py
+30 0 1 * * qcronsub -b y -j y -l arch=lx -l h_rt=0:15:00 -l virtual_free=80M -l sql-s1-rr=1 -N general.crossredirects -o ~/var/log ~/bin/dbreps -r general.crossredirects -s enwiki
+30 12 * * 6 qcronsub -b y -j y -l arch=lx -l h_rt=12:50:00 -l virtual_free=70M -l sql-s1-rr=1 -o ~/var/log ~/bin/redreds.py
+30 18 * * 6 qcronsub -b y -j y -l arch=lx -l h_rt=0:15:00 -l virtual_free=70M -l sql-s1-rr=1 -N general.longredirects -o ~/var/log ~/bin/dbreps -r general.longredirects -s enwiki
+
+# STATISTICS
+0 12 * * 4 qcronsub -b y -j y -l arch=lx -l h_rt=1:35:00 -l virtual_free=60M -l sql-s1-rr=1 -o ~/var/log ~/bin/mostwatched.py
+0 14 * * 4 qcronsub -b y -j y -l arch=lx -l h_rt=0:50:00 -l virtual_free=60M -l sql-s1-rr=1 -o ~/var/log ~/bin/mostwatchedperns.py
+0 16 * * 4 qcronsub -b y -j y -l arch=lx -l h_rt=1:00:00 -l virtual_free=60M -l sql-s1-rr=1 -N general.mostwatchedusers -o ~/var/log ~/bin/dbreps -r general.mostwatchedusers -s enwiki
+15 0 * * * qcronsub -b y -j y -l arch=lx -l h_rt=0:10:00 -l virtual_free=60M -l sql-s1-rr=1 -o ~/var/log ~/bin/nscounts.py
+10 5 * * 4 qcronsub -b y -j y -l arch=lx -l h_rt=2:40:00 -l virtual_free=80M -l sql-s1-rr=1 -N enwiki.reviewercandidates -o ~/var/log ~/bin/dbreps -r enwiki.reviewercandidates -s enwiki
+0 22 * * 4 qcronsub -b y -j y -l arch=lx -l h_rt=1:45:00 -l virtual_free=60M -l sql-s1-rr=1 -o ~/var/log ~/bin/userprefs.py
+20 0 * * * qcronsub -b y -j y -l arch=lx -l h_rt=0:10:00 -l virtual_free=90M -l sql-s1-rr=1 -o ~/var/log ~/bin/logactions.py
+25 0 * * * qcronsub -b y -j y -l arch=lx -l h_rt=0:10:00 -l virtual_free=60M -l sql-s1-rr=1 -o ~/var/log ~/bin/wikilovestats.py
+
+# STUBS
+0 16 * * 4 qcronsub -b y -j y -l arch=lx -l h_rt=0:15:00 -l virtual_free=60M -l sql-s1-rr=1 -N enwiki.unusedstubtemplates -o ~/var/log ~/bin/dbreps -r enwiki.unusedstubtemplates -s enwiki
+
+# TEMPLATES
+0 15 8,22 * * qcronsub -b y -j y -l arch=lx -l h_rt=2:20:00 -l virtual_free=80M -l sql-s1-rr=1 -o ~/var/log ~/bin/mosttransclusions.py
+20 15 * * 4 qcronsub -b y -j y -l arch=lx -l h_rt=0:15:00 -l virtual_free=70M -l sql-s1-rr=1 -N general.transusertemps -o ~/var/log ~/bin/dbreps -r general.transusertemps -s enwiki
+5 15 * * 4 qcronsub -b y -j y -l arch=lx -l h_rt=0:15:00 -l virtual_free=60M -l sql-s1-rr=1 -N general.uncattemps -o ~/var/log ~/bin/dbreps -r general.uncattemps -s enwiki
+0 15 * * 4 qcronsub -b y -j y -l arch=lx -l h_rt=2:25:00 -l virtual_free=120M -l sql-s1-rr=1 -N enwiki.unusedtemplates -o ~/var/log ~/bin/dbreps -r enwiki.unusedtemplates -s enwiki
+10 15 * * 4 qcronsub -b y -j y -l arch=lx -l h_rt=0:10:00 -l virtual_free=60M -l sql-s1-rr=1 -N general.usertempreds -o ~/var/log ~/bin/dbreps -r general.usertempreds -s enwiki
+
+# USERS
+45 15 * * 3 qcronsub -b y -j y -l arch=lx -l h_rt=0:05:00 -l virtual_free=60M -l sql-s1-rr=1 -N general.blankanontalks -o ~/var/log ~/bin/dbreps -r general.blankanontalks -s enwiki
+0 15 6,20 * * qcronsub -b y -j y -l arch=lx -l h_rt=2:45:00 -l virtual_free=80M -l sql-s1-rr=1 -o ~/var/log ~/bin/inactiveuserrights.py
+30 0 * * 2 qcronsub -b y -j y -l arch=lx -l h_rt=0:10:00 -l virtual_free=80M -l sql-s1-rr=1 -o ~/var/log ~/bin/metarightschanges.py
+55 15 * * 3 qcronsub -b y -j y -l arch=lx -l h_rt=0:25:00 -l virtual_free=70M -l sql-s1-rr=1 -N general.oldiptalks -o ~/var/log ~/bin/dbreps -r general.oldiptalks -s enwiki
+30 15 * * 3 qcronsub -b y -j y -l arch=lx -l h_rt=0:55:00 -l virtual_free=300M -l sql-s1-rr=1 -N general.anononlyanons -o ~/var/log ~/bin/dbreps -r general.anononlyanons -s enwiki
+0 15 * * 3 qcronsub -b y -j y -l arch=lx -l h_rt=0:25:00 -l virtual_free=1170M -l sql-s1-rr=1 -N general.noactionuserpages -o ~/var/log ~/bin/dbreps -r general.noactionuserpages -s enwiki
+0 15 * * 3 qcronsub -b y -j y -l arch=lx -l h_rt=2:30:00 -l virtual_free=1190M -l sql-s1-rr=1 -o ~/var/log ~/bin/noactionusertalks.py
+
+# WIKIDATA
+30 0 * * * qcronsub -b y -j y -l arch=lx -l h_rt=0:10:00 -l virtual_free=60M -l sql-s3-rr=1 -o ~/var/log ~/bin/userspaceinitems.py
+50 0 * * * qcronsub -b y -j y -l arch=lx -l h_rt=0:20:00 -l virtual_free=60M -l sql-s3-rr=1 -o ~/var/log ~/bin/popular_properties.py
+20 1 * * * qcronsub -b y -j y -l arch=lx -l h_rt=0:20:00 -l virtual_free=60M -l sql-s3-rr=1 -o ~/var/log ~/bin/popular_items.py
+50 1 * * * qcronsub -b y -j y -l arch=lx -l h_rt=0:20:00 -l virtual_free=60M -l sql-s3-rr=1 -o ~/var/log ~/bin/property_inheritance.py
+30 2 * * * qcronsub -b y -j y -l arch=lx -l h_rt=8:00:00 -l virtual_free=60M -l sql-s1-rr=1 -l sql-s2-rr=1 -l sql-s3-rr=1 -l sql-s4-rr=1 -l sql-s5-rr=1 -l sql-s6-rr=1 -l sql-s7-rr=1 -o ~/var/log ~/bin/missing_links.py

@@ -1,18 +1,44 @@
+[dbreps]
+
 # Wiki login details
-username = ''
-password = ''
-apiurl = ''
-dumpdate = ''
+username:
+password:
+apiurl:
+dumpdate:
 
 # Toolserver details
-host = ''
-dbname = ''
-path = ''
+host:
+dbname:
+path:
 
 # Report details (generic)
-rootpage = ''
-editsumm = ''
+rootpage:
+editsumm:
 
 # Report details (multi-page)
-blankcontent = ''
-blanksumm = ''
+blankcontent:
+blanksumm:
+
+[enwiki]
+
+# Wiki login details
+username:
+password:
+apiurl:
+dumpdate:
+
+# Toolserver details
+host:
+host-commons:
+host-commons-user:
+host-user:
+dbname:
+userdb:
+
+# Report details (generic)
+rootpage:
+editsumm:
+
+# Report details (multi-page)
+blankcontent:
+blanksumm:

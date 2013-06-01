@@ -1,0 +1,48 @@
+Deployment
+==========
+
+To deploy the current HEAD at GitHub, run as yourself with
+ssh permissions for Toolserver and Tools:
+
+$ ssh yarrow.toolserver.org sudo -u dbreps bash <<EOF &&
+cd ~dbreps/src/database-reports &&
+git pull --rebase &&
+python setup.py install --user --install-scripts ~dbreps/bin &&
+crontab crontab.yarrow
+EOF
+ssh submit.toolserver.org sudo -u dbreps cronie \~dbreps/src/database-reports/cronietab.submit &&
+ssh tools-login.wmflabs.org sudo -iu local-dbreps bash <<EOF &&
+cd ~/src/database-reports &&
+git pull --rebase &&
+python setup.py install --user --install-scripts ~/bin &&
+crontab crontab.tools
+EOF
+echo Successfully deployed dbreps to yarrow, submit and tools-login.
+
+Caution: This does not install the required modules per
+README (MySQLdb, oursql, python-Levenshtein and wikitools),
+nor does it signal an error if they are not installed.
+
+
+User databases
+==============
+
+Some reports store information about the last run in tables in user
+databases.  They can be safely purged and excluded from backup, but
+their structures must always exist.
+
+To (re-)create these, run as user dbreps:
+
+$ USERDB=p_dbreps
+$ sql -u enwiki_p <<EOF
+DROP TABLE IF EXISTS $USERDB.bullshit_reviewed_page_titles;
+CREATE TABLE $USERDB.bullshit_reviewed_page_titles
+(page_id int(8) unsigned PRIMARY KEY,
+ lastreviewed TIMESTAMP NOT NULL);
+
+DROP TABLE IF EXISTS $USERDB.potenshblps4_skipped_pages;
+CREATE TABLE $USERDB.potenshblps4_skipped_pages
+(page_title VARCHAR(255) COLLATE utf8_bin PRIMARY KEY);
+LOAD DATA LOCAL INFILE 'data/enwiki/potenshblps4/skipped_pages.txt'
+INTO TABLE $USERDB.potenshblps4_skipped_pages (page_title);
+EOF
