@@ -16,66 +16,48 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import common
-import settings
+import reports
 
-report_name = u'Розірвані перенаправлення'
 
-report_template = u'''
-Розірвані перенаправлення; дані станом на <onlyinclude>{0}</onlyinclude>.
+class report(reports.report):
+    def get_title(self):
+        return u'Розірвані перенаправлення'
 
-{{| class="wikitable sortable plainlinks" style="width:100%%; margin:auto;"
-|- style="white-space:nowrap;"
-! №
-! Перенаправлення
-! Перенаправляє на
-{1}
-|}}
-'''
+    def get_preamble_template(self):
+        return u'Розірвані перенаправлення; дані станом на <onlyinclude>%s</onlyinclude>.'
 
-sqlQuery = '''
-/* brokenredirects.py SLOW_OK */
-SELECT
-  p1.page_namespace,
-  ns_name,
-  p1.page_title,
-  rd_title
-FROM redirect AS rd
-JOIN page p1
-ON rd.rd_from = p1.page_id
-JOIN toolserver.namespace
-ON p1.page_namespace = ns_id
-AND dbname = "{0}"
-LEFT JOIN page AS p2
-ON rd_namespace = p2.page_namespace
-AND rd_title = p2.page_title
-WHERE rd_namespace >= 0
-AND p2.page_namespace IS NULL
-ORDER BY p1.page_namespace ASC, p1.page_title ASC;
-'''.format(settings.dbname)
+    def get_table_columns(self):
+        return [u'№', u'Перенаправлення', u'Перенаправляє на']
 
-site, db, cursor = common.prepareEnvironment()
+    def get_table_rows(self, conn):
+        cursor = conn.cursor()
+        cursor.execute('''
+        /* brokenredirects.py SLOW_OK */
+        SELECT
+          p1.page_namespace,
+          CONVERT(ns_name USING utf8),
+          CONVERT(p1.page_title USING utf8)
+        FROM redirect AS rd
+        JOIN page p1
+        ON rd.rd_from = p1.page_id
+        JOIN toolserver.namespace
+        ON p1.page_namespace = ns_id
+        AND dbname = CONCAT(?, '_p')
+        LEFT JOIN page AS p2
+        ON rd_namespace = p2.page_namespace
+        AND rd_title = p2.page_title
+        WHERE rd_namespace >= 0
+        AND p2.page_namespace IS NULL
+        ORDER BY p1.page_namespace ASC;
+        ''', (self.site, ))
 
-cursor.execute(sqlQuery)
+        for page_namespace, ns_name, page_title in cursor:
+            if page_namespace == 6 or page_namespace == 14:
+                page_title = ':%s:%s' % (ns_name, page_title)
+            elif ns_name:
+                page_title = '%s:%s' % (ns_name, page_title)
+            else:
+                page_title = '%s' % (page_title)
+            yield ['[[%s]]' % page_title]
 
-i = 1
-output = []
-for row in cursor.fetchall():
-    ns_name = unicode(row[1], 'utf-8')
-    page_title = unicode(row[2], 'utf-8')
-    redirect_target = unicode(row[3], 'utf-8')
-    page_namespace = row[0]
-    if page_namespace == 6 or page_namespace == 14:
-        page_title = u':{0}:{1}'.format(ns_name, page_title)
-    elif ns_name > 0:
-        page_title = u'{0}:{1}'.format(ns_name, page_title)
-    else:
-        page_title = u'{0}'.format(page_title)
-    table_row = u'''|-
-| {0}
-| [[{1}]]
-| [[:{2}]]'''.format(i, page_title,redirect_target)
-    output.append(table_row)
-    i += 1
-
-common.finishReport(db, cursor, site, report_name, report_template, [output], __file__)
+        cursor.close()
