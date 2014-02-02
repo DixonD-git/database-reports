@@ -8,7 +8,8 @@ import os
 import sys
 
 import oursql
-import wikitools
+import pywikibot
+from pywikibot import login
 
 # Parse arguments.
 parser = optparse.OptionParser(usage="Usage: %prog [-c INIFILE] -r REPORT -s SITE [-t]")
@@ -32,15 +33,12 @@ if not options.site:
 
 # Read configuration.
 config = ConfigParser.ConfigParser()
-config.read([options.inifile])
+config.readfp(codecs.open(options.inifile, "r", "utf8"))
 if not config.has_section(options.site):
     parser.error("No section for %s in %s" % (options.site, options.inifile))
 
 # Set up wiki login.
-wiki = wikitools.Wiki(config.get(options.site, 'apiurl'))
-wiki.setUserAgent('http://en.wikipedia.org/wiki/Wikipedia_talk:Database_reports')
-wiki.setMaxlag(-1)
-wiki.login(config.get(options.site, 'username'), config.get(options.site, 'password'))
+wiki = pywikibot.Site(config.get(options.site, 'sitecode'),config.get(options.site, 'sitefamily'))
 
 # Load report module and initialize report.
 try:
@@ -92,20 +90,20 @@ else:
         while (sub_page_nr - 1) * r.rows_per_page() < len(formatted_table_rows):
             first_row = (sub_page_nr - 1) * r.rows_per_page()
             next_first_row = sub_page_nr * r.rows_per_page()
-            reportpage = wikitools.Page(wiki, config.get(options.site, 'rootpage') + r.get_title() + '/' + str(sub_page_nr))
+            reportpage = pywikibot.Page(wiki, config.get(options.site, 'rootpage') + r.get_title() + '/' + str(sub_page_nr))
             pagecontents = pageheader + ''.join(formatted_table_rows[first_row:next_first_row]) + pagefooter
-            reportpage.edit(pagecontents, summary=config.get(options.site, 'editsumm'), bot=1, skipmd5=True)
-            sub_page_nr = sub_page_nr + 1
+            reportpage.put(pagecontents, comment=config.get(options.site, 'editsumm'))
+            sub_page_nr += 1
         while True:
-            reportpage = wikitools.Page(wiki, config.get(options.site, 'rootpage') + r.get_title() + '/' + str(sub_page_nr))
-            if not reportpage.exists:
+            reportpage = pywikibot.Page(wiki, config.get(options.site, 'rootpage') + r.get_title() + '/' + str(sub_page_nr))
+            if not reportpage.exists():
                 break
-            reportpage.edit(config.get(options.site, 'blankcontent'), summary=config.get(options.site, 'blanksumm'), bot=1)
-            sub_page_nr = sub_page_nr + 1
+            reportpage.put(config.get(options.site, 'blankcontent'), comment=config.get(options.site, 'blanksumm'))
+            sub_page_nr += 1
     else:
         pagecontents = pageheader + ''.join(formatted_table_rows) + pagefooter
-        reportpage = wikitools.Page(wiki, config.get(options.site, 'rootpage') + r.get_title())
-        reportpage.edit(pagecontents, summary=config.get(options.site, 'editsumm'), bot=1, skipmd5=True)
+        reportpage = pywikibot.Page(wiki, config.get(options.site, 'rootpage') + r.get_title())
+        reportpage.put(pagecontents, comment=config.get(options.site, 'editsumm'))
 
 # Close connection to database.
 conn.commit()

@@ -27,7 +27,18 @@ class report(reports.report):
         return u'Розірвані перенаправлення; дані станом на <onlyinclude>%s</onlyinclude>.'
 
     def get_table_columns(self):
-        return [u'№', u'Перенаправлення', u'Перенаправляє на']
+        return [u'Перенаправлення', u'Перенаправляє на']
+
+    @staticmethod
+    def __make_page_title(page_namespace, page_title):
+        ns_name = '{{ns:%s}}' % page_namespace
+        if page_namespace == 6 or page_namespace == 14:
+            page_title = ':%s:%s' % (ns_name, page_title)
+        elif page_namespace != 0:
+            page_title = '%s:%s' % (ns_name, page_title)
+        else:
+            page_title = '%s' % page_title
+        return '[[%s]]' % page_title
 
     def get_table_rows(self, conn):
         cursor = conn.cursor()
@@ -35,29 +46,23 @@ class report(reports.report):
         /* brokenredirects.py SLOW_OK */
         SELECT
           p1.page_namespace,
-          CONVERT(ns_name USING utf8),
-          CONVERT(p1.page_title USING utf8)
+          CONVERT(p1.page_title USING utf8),
+          rd_namespace,
+          CONVERT(rd_title USING utf8)
         FROM redirect AS rd
         JOIN page p1
         ON rd.rd_from = p1.page_id
-        JOIN toolserver.namespace
-        ON p1.page_namespace = ns_id
-        AND dbname = CONCAT(?, '_p')
         LEFT JOIN page AS p2
         ON rd_namespace = p2.page_namespace
         AND rd_title = p2.page_title
         WHERE rd_namespace >= 0
         AND p2.page_namespace IS NULL
         ORDER BY p1.page_namespace ASC;
-        ''', (self.site, ))
+        ''')
 
-        for page_namespace, ns_name, page_title in cursor:
-            if page_namespace == 6 or page_namespace == 14:
-                page_title = ':%s:%s' % (ns_name, page_title)
-            elif ns_name:
-                page_title = '%s:%s' % (ns_name, page_title)
-            else:
-                page_title = '%s' % (page_title)
-            yield ['[[%s]]' % page_title]
+        for page1_namespace, page1_title, page2_namespace, page2_title in cursor:
+            yield [self.__make_page_title(page1_namespace, page1_title),
+                   self.__make_page_title(page2_namespace, page2_title)]
+
 
         cursor.close()

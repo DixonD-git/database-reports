@@ -47,6 +47,10 @@ class report:
                 del os.environ['TZ']
             else:
                 os.environ['TZ'] = old_TZ
+        elif self.site == 'ukwiki':
+            locale.setlocale(locale.LC_ALL, 'uk_UA.utf8')
+            current_of = time.strftime(u'%H:%M, %d %B %Y (UTC)'.encode('utf-8'), time.gmtime(timestamp)).decode('utf-8')
+            locale.setlocale(locale.LC_ALL, 'C')
         else:
             current_of = time.strftime('%H:%M, %d %B %Y (UTC)', time.gmtime(timestamp))
         cursor.close()
