@@ -1,11 +1,13 @@
-MediaWiki database reports, primarily written for the English Wikipedia:
-<https://en.wikipedia.org/wiki/Wikipedia:Database_reports>.
+Mediaiwiki database reports adapted for Ukrainian Wikipedia:
+<https://uk.wikipedia.org/wiki/Вікіпедія:Звіти_бази_даних>
+
+It is a fork from reports, primarily written for the English Wikipedia:.
 
 Dependencies:
 * Python 2.5
 ** MySQLdb module
 ** oursql module (<http://pythonhosted.org/oursql/>)
 ** python-Levenshtein module (<http://pypi.python.org/pypi/python-Levenshtein/>)
-** wikitools module (<https://code.google.com/p/python-wikitools/>)
+** Pywikibot module (<https://www.mediawiki.org/wiki/Manual:Pywikibot>)
 
 License information is available in the LICENSE file.
