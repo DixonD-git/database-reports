@@ -6,10 +6,10 @@ import locale
 import optparse
 import os
 import sys
+import inspect
 
 import oursql
 import pywikibot
-from pywikibot import login
 
 # Parse arguments.
 parser = optparse.OptionParser(usage="Usage: %prog [-c INIFILE] -r REPORT -s SITE [-t]")
@@ -38,7 +38,7 @@ if not config.has_section(options.site):
     parser.error("No section for %s in %s" % (options.site, options.inifile))
 
 # Set up wiki login.
-wiki = pywikibot.Site(config.get(options.site, 'sitecode'),config.get(options.site, 'sitefamily'))
+wiki = pywikibot.Site(config.get(options.site, 'sitecode'), config.get(options.site, 'sitefamily'))
 
 # Load report module and initialize report.
 try:
@@ -90,12 +90,14 @@ else:
         while (sub_page_nr - 1) * r.rows_per_page() < len(formatted_table_rows):
             first_row = (sub_page_nr - 1) * r.rows_per_page()
             next_first_row = sub_page_nr * r.rows_per_page()
-            reportpage = pywikibot.Page(wiki, config.get(options.site, 'rootpage') + r.get_title() + '/' + str(sub_page_nr))
+            reportpage = pywikibot.Page(wiki,
+                                        config.get(options.site, 'rootpage') + r.get_title() + '/' + str(sub_page_nr))
             pagecontents = pageheader + ''.join(formatted_table_rows[first_row:next_first_row]) + pagefooter
             reportpage.put(pagecontents, comment=config.get(options.site, 'editsumm'))
             sub_page_nr += 1
         while True:
-            reportpage = pywikibot.Page(wiki, config.get(options.site, 'rootpage') + r.get_title() + '/' + str(sub_page_nr))
+            reportpage = pywikibot.Page(wiki,
+                                        config.get(options.site, 'rootpage') + r.get_title() + '/' + str(sub_page_nr))
             if not reportpage.exists():
                 break
             reportpage.put(config.get(options.site, 'blankcontent'), comment=config.get(options.site, 'blanksumm'))
@@ -108,3 +110,14 @@ else:
 # Close connection to database.
 conn.commit()
 conn.close()
+
+# upload source file
+lines, linenum = inspect.getsourcelines(reportmodule)
+sourceCode = u"".join([line.decode("utf8") for line in lines])
+
+sourceCode = u'== {0} ==\n<div style="overflow:auto;">\n<source lang="python">\n{1}\n</source>\n</div>'.format(
+    r.get_title(), sourceCode)
+
+reportSourcePage = pywikibot.Page(wiki, config.get(options.site, 'rootpage') + r.get_title() + '/'
+                                        + config.get(options.site, 'sourcepage'))
+reportSourcePage.put(sourceCode, comment=config.get(options.site, 'editsourcesumm'))

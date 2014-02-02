@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/env python2.7
 
-# Copyright 2008-2013 bjweeks, MZMcBride, SQL, Legoktm, DixonD-git
+# Copyright 2008-2014 bjweeks, MZMcBride, SQL, Legoktm, DixonD-git
 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,7 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import reports
-
 
 class report(reports.report):
     def get_title(self):
