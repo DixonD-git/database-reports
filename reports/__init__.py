@@ -95,3 +95,14 @@ class report:
         process_category(cat)
 
         return queried_cats.keys()
+
+    @staticmethod
+    def make_page_title(page_namespace, page_title):
+        if page_namespace == 0:
+            return page_title
+
+        ns_name = u'{{ns:%s}}' % page_namespace
+        if page_namespace == 6 or page_namespace == 14:
+            return u':%s:%s' % (ns_name, page_title)
+
+        return u'%s:%s' % (ns_name, page_title)

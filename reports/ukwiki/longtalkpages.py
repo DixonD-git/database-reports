@@ -21,12 +21,13 @@ import reports
 
 class report(reports.report):
     def get_title(self):
-        return u'Довгі сторінки'
+        return u'Довгі сторінки обговорення'
 
     def get_preamble_template(self):
-        return u'''Довгі сторінки; дані станом на <onlyinclude>%s</onlyinclude>.
+        return u'''Довгі сторінки обговорення; дані станом на <onlyinclude>%s</onlyinclude>.
 
-Всі сторінки, довжина яких перевищує 400 000 байтів.'''
+Сторінки обговорення, довжина яких перевищує 140 000 байтів \
+(не включаючи підсторінки і сторінки у користувацькому просторі)'''
 
     def get_table_columns(self):
         return [u'Сторінка', u'Довжина', u'Останнє редагування']
@@ -34,7 +35,7 @@ class report(reports.report):
     def get_table_rows(self, conn):
         cursor = conn.cursor()
         cursor.execute('''
-        /* longpages.py SLOW_OK */
+        /* longtalkpages.py SLOW_OK */
         SELECT
           page_namespace,
           CONVERT(page_title USING utf8),
@@ -43,7 +44,10 @@ class report(reports.report):
         FROM page
         JOIN revision
         ON rev_page = page_id
-        WHERE page_len > 400000
+        WHERE page_len > 140000
+        AND page_title NOT LIKE "%%/%%"
+        AND page_namespace != 3
+        AND page_namespace mod 2 != 0
         AND rev_timestamp = (SELECT
                                MAX(rev_timestamp)
                              FROM revision

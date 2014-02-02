@@ -60,7 +60,7 @@ conn = oursql.Connection(host=config.get(options.site, inikey),
                          read_default_file='~/.my.cnf')
 
 # Format report header and footer.
-pageheader = r.get_preamble(conn) + '''
+pageheader = r.get_preamble(conn) + u'''
 
 {| class="wikitable sortable plainlinks" style="width:100%; margin:auto;"
 |- style="white-space:nowrap;"
@@ -68,15 +68,15 @@ pageheader = r.get_preamble(conn) + '''
 ''' + ''.join("! %s\n" % column for column in r.get_table_columns())
 footer = r.get_footer()
 if footer != None:
-    pagefooter = '|}\n' + footer
+    pagefooter = u'|}\n' + footer
 else:
-    pagefooter = '|}'
+    pagefooter = u'|}'
 
 # Format table rows.
 i = 1
 formatted_table_rows = []
 for row in r.get_table_rows(conn):
-    formatted_table_rows.append("|-\n| %d\n" % i + ''.join("| " + cell + "\n" for cell in row))
+    formatted_table_rows.append(u"|-\n| %s\n" % unicode(i) + ''.join(u"| " + unicode(cell) + u"\n" for cell in row))
     i += 1
 
 # Upload report.

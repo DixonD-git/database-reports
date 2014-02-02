@@ -18,6 +18,7 @@
 
 import reports
 
+
 class report(reports.report):
     def get_title(self):
         return u'Розірвані перенаправлення'
@@ -27,17 +28,6 @@ class report(reports.report):
 
     def get_table_columns(self):
         return [u'Перенаправлення', u'Перенаправляє на']
-
-    @staticmethod
-    def __make_page_title(page_namespace, page_title):
-        ns_name = '{{ns:%s}}' % page_namespace
-        if page_namespace == 6 or page_namespace == 14:
-            page_title = ':%s:%s' % (ns_name, page_title)
-        elif page_namespace != 0:
-            page_title = '%s:%s' % (ns_name, page_title)
-        else:
-            page_title = '%s' % page_title
-        return '[[%s]]' % page_title
 
     def get_table_rows(self, conn):
         cursor = conn.cursor()
@@ -60,8 +50,8 @@ class report(reports.report):
         ''')
 
         for page1_namespace, page1_title, page2_namespace, page2_title in cursor:
-            yield [self.__make_page_title(page1_namespace, page1_title),
-                   self.__make_page_title(page2_namespace, page2_title)]
+            yield [u'[[%s]]' % self.make_page_title(page1_namespace, page1_title),
+                   u'[[%s]]' % self.make_page_title(page2_namespace, page2_title)]
 
 
         cursor.close()
