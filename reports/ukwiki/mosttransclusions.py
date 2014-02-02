@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/env python2.7
 
-# Copyright 2008-2013 bjweeks, MZMcBride, DixonD-git
+# Copyright 2008-2014 bjweeks, MZMcBride, DixonD-git
 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,56 +16,36 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import common
-import settings
+import reports
 
-report_name = u'Шаблони, що мають найбільше включень'
 
-report_template = u'''
-Шаблони, що мають найбільше включень (не більше 2000 записів); дані станом на <onlyinclude>{0}</onlyinclude>.
+class report(reports.report):
+    def get_title(self):
+        return u'Шаблони, що мають найбільше включень'
 
-{{| class="wikitable sortable" style="width:100%%; margin:auto;"
-|- style="white-space:nowrap;"
-! №
-! Шаблон
-! Використання
-|-
-{1}
-|}}
-'''
+    def get_preamble_template(self):
+        return u'Шаблони, що мають найбільше включень (не більше 2000 записів); ' \
+               u'дані станом на <onlyinclude>%s</onlyinclude>.'
 
-sqlQuery = '''
-/* mosttransclusions.py SLOW_OK */
-SELECT
-  ns_name,
-  tl_title,
-  COUNT(*)
-FROM templatelinks
-JOIN toolserver.namespace
-      ON dbname = "{0}"
-      AND ns_id = tl_namespace
-WHERE tl_namespace = 10
-GROUP BY tl_title
-ORDER BY COUNT(*) DESC
-LIMIT 2000;
-'''.format(settings.dbname)
+    def get_table_columns(self):
+        return [u'Шаблон', u'Використання']
 
-site, db, cursor = common.prepareEnvironment()
+    def get_table_rows(self, conn):
+        cursor = conn.cursor()
+        cursor.execute('''
+        /* mosttransclusions.py SLOW_OK */
+        SELECT
+          CONVERT(tl_title USING utf8),
+          COUNT(*)
+        FROM templatelinks
+        WHERE tl_namespace = 10
+        GROUP BY tl_title
+        ORDER BY COUNT(*) DESC
+        LIMIT 2000;
+        ''')
 
-cursor.execute(sqlQuery)
+        for tl_title, count in cursor:
+            tl_title = u'[[Шаблон:%s|%s]]' % (tl_title, tl_title)
+            yield [tl_title, count]
 
-i = 1
-output = []
-for row in cursor.fetchall():
-    tl_namespace = unicode(row[0], 'utf-8')
-    tl_title = unicode(row[1], 'utf-8')
-    tl_title = u'[[{0}:{1}|{2}]]'.format(tl_namespace, tl_title, tl_title)
-    uses = row[2]
-    table_row = u'''| {0}
-| {1}
-| {2}
-|-'''.format(i, tl_title, uses)
-    output.append(table_row)
-    i += 1
-
-common.finishReport(db, cursor, site, report_name, report_template, [output], __file__)
+        cursor.close()
