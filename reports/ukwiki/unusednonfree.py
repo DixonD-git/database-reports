@@ -16,63 +16,41 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import common
-import settings
+import reports
 
-report_name = u'Невільні файли, що не використовуються'
 
-non_free_media_category = u'Невільні_файли'
+class report(reports.report):
+    def get_title(self):
+        return u'Невільні файли, що не використовуються'
 
-report_template = u'''
-Невільні файли, що не використовуються; дані станом на <onlyinclude>{0}</onlyinclude>.
+    def get_preamble_template(self):
+        return u'Невільні файли, що не використовуються; дані станом на <onlyinclude>%s</onlyinclude>.'
 
-{{| class="wikitable sortable plainlinks" style="width:100%%; margin:auto;"
-|- style="white-space:nowrap;"
-! №
-! Файл
-|-
-{1}
-|}}
-'''
+    def get_table_columns(self):
+        return [u'Файл']
 
-sqlQuery = '''
-/* unusednonfree.py SLOW_OK */
-SELECT
-  ns_name,
-  page_title
-FROM  (SELECT
-        page_id,
-        ns_name,
-        page_title
-      FROM page
-      JOIN toolserver.namespace
-      ON dbname = "ukwiki_p"
-      AND page_namespace = ns_id
-      JOIN categorylinks
-      ON cl_from = page_id
-      WHERE cl_to = "Невільні_файли"
-      AND page_namespace = 6
-	  ) AS pgtmp
-WHERE NOT EXISTS
-  (SELECT 1
-   FROM   imagelinks
-   WHERE  pgtmp.page_title = il_to)
-ORDER BY page_title
-'''.format(settings.dbname, non_free_media_category.encode('utf-8'))
+    def get_table_rows(self, conn):
+        cursor = conn.cursor()
+        cursor.execute('''
+        /* unusednonfree.py SLOW_OK */
+        SELECT
+            CONVERT(page_title USING utf8)
+        FROM (SELECT
+                page_title
+              FROM page
+              JOIN categorylinks
+              ON cl_from = page_id
+              WHERE cl_to = "%s"
+              AND page_namespace = 6) AS pgtmp
+        WHERE NOT EXISTS
+          (SELECT 1
+           FROM   imagelinks
+           WHERE  pgtmp.page_title = il_to)
+        ORDER BY page_title
+        ''' % u'Невільні_файли'.encode('utf-8'))
 
-site, db, cursor = common.prepareEnvironment()
+        for page_title, in cursor:
+            page_title = u'[[:Файл:%s|%s]]' % (page_title, page_title)
+            yield [page_title]
 
-cursor.execute(sqlQuery)
-
-i = 1
-output = []
-for row in cursor.fetchall():
-    page_title = u'[[:{0}:{1}|{2}]]'.format(unicode(row[0], 'utf-8'), unicode(row[1], 'utf-8'),
-        unicode(row[1], 'utf-8'))
-    table_row = u'''| {0}
-| {1}
-|-'''.format(i, page_title)
-    output.append(table_row)
-    i += 1
-
-common.finishReport(db, cursor, site, report_name, report_template, [output], __file__)
+        cursor.close()
