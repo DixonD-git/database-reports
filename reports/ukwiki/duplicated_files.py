@@ -36,7 +36,7 @@ class report(reports.report):
         SELECT u.img_name
         FROM ukwiki_p.image AS u
         INNER JOIN commonswiki_p.image AS c
-        ON c.img_name=en.img_name
+        ON c.img_name=u.img_name
         ORDER BY u.img_name;
         ''')
 
