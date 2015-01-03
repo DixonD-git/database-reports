@@ -27,22 +27,24 @@ class report(reports.report):
         return u'Файли, які є у Вікісховищі; дані станом на <onlyinclude>%s</onlyinclude>.'
 
     def get_table_columns(self):
-        return [u'Файл']
+        return [u'Файл', u'Розмір']
 
     def get_table_rows(self, conn):
         cursor = conn.cursor()
         cursor.execute('''
         /* duplicated_files.py SLOW_OK */
         SELECT
-            CONVERT(u.img_name USING utf8)
+            CONVERT(u.img_name USING utf8),
+            u.img_size
         FROM ukwiki_p.image AS u
         INNER JOIN commonswiki_p.image AS c
         ON c.img_name=u.img_name AND c.img_size=u.img_size
         ORDER BY u.img_name;
         ''')
 
-        for page_title in cursor:
-            yield [u'[[:Файл:%s|%s]]' % (page_title, page_title)]
+        for page_title, img_size in cursor:
+            page_title = u'[[:Файл:%s|%s]]' % (page_title, page_title)
+            yield [page_title, img_size]
 
 
         cursor.close()
