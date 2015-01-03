@@ -33,7 +33,8 @@ class report(reports.report):
         cursor = conn.cursor()
         cursor.execute('''
         /* duplicated_files.py SLOW_OK */
-        SELECT u.img_name
+        SELECT
+            CONVERT(u.img_name USING utf8)
         FROM ukwiki_p.image AS u
         INNER JOIN commonswiki_p.image AS c
         ON c.img_name=u.img_name AND c.img_size=u.img_size
