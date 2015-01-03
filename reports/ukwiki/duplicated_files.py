@@ -42,7 +42,7 @@ class report(reports.report):
         ''')
 
         for page_title in cursor:
-            yield [u'[[:Файл:%s|%s]]' % (page_title, page_title),]
+            yield [u'[[:Файл:%s|%s]]' % (page_title, page_title)]
 
 
         cursor.close()
