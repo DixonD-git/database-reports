@@ -16,68 +16,44 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import common
-import settings
+import reports
 
-report_name = u'Шаблони, що включають невільні файли'
-non_free_media_category = u'Невільні_файли'
 
-report_template = u'''
-Шаблони, що включають невільні файли; дані станом на <onlyinclude>{0}</onlyinclude>.
+class report(reports.report):
+    def get_title(self):
+        return u'Шаблони, що включають невільні файли'
 
-{{| class="wikitable sortable plainlinks" style="width:100%%; margin:auto;"
-|- style="white-space:nowrap;"
-! №
-! Шаблон
-! Невільні файли
-|-
-{1}
-|}}
-'''
+    def get_preamble_template(self):
+        return u'Шаблони, що включають невільні файли; дані станом на <onlyinclude>%s</onlyinclude>.'
 
-sqlQuery = '''
-/* templatesnonfree.py SLOW_OK */
-SELECT
-  imgtmp.ns_name,
-  imgtmp.page_title,
-  COUNT(cl_to)
-FROM page AS pg1
-JOIN categorylinks
-ON cl_from = pg1.page_id
-JOIN (SELECT
-        pg2.page_namespace,
-        ns_name,
-        pg2.page_title,
-        il_to
-      FROM page AS pg2
-      JOIN toolserver.namespace
-      ON dbname = "{0}"
-      AND pg2.page_namespace = ns_id
-      JOIN imagelinks
-      ON il_from = page_id
-      WHERE pg2.page_namespace = 10) AS imgtmp
-ON il_to = pg1.page_title
-WHERE pg1.page_namespace = 6
-AND cl_to = "{1}"
-GROUP BY imgtmp.page_namespace, imgtmp.page_title
-ORDER BY COUNT(cl_to) DESC, imgtmp.page_title ASC;
-'''.format(settings.dbname, non_free_media_category.encode('utf-8'))
+    def get_table_columns(self):
+        return [u'Шаблон', u'Невільних файлів']
 
-site, db, cursor = common.prepareEnvironment()
+    def get_table_rows(self, conn):
+        cursor = conn.cursor()
+        cursor.execute('''
+        /* templatesnonfree.py SLOW_OK */
+        SELECT
+            p.page_namespace,
+            CONVERT(p.page_title USING utf8),
+            COUNT(*)
+        FROM page AS p
+        INNER JOIN imagelinks AS il
+        ON il.il_from = p.page_id
+        INNER JOIN page as f
+        ON il.il_to = f.page_title
+        INNER JOIN categorylinks AS cl
+        ON cl.cl_from = f.page_id
+        WHERE
+            p.page_namespace = 10
+            AND f.page_namespace = 6
+            AND cl.cl_to = '%s'
+        GROUP BY p.page_namespace, p.page_title
+        ORDER BY COUNT(*) DESC;
+        ''' % u'Невільні_файли'.encode('utf-8'))
 
-cursor.execute(sqlQuery)
+        for page_namespace, page_title, count in cursor:
+            page_title = u'[[%s]]' % self.make_page_title(page_namespace, page_title)
+            yield [page_title, count]
 
-i = 1
-output = []
-for row in cursor.fetchall():
-    page_title = u'[[{0}:{1}|{2}]]'.format(unicode(row[0], 'utf-8'), unicode(row[1], 'utf-8'),
-        unicode(row[1], 'utf-8'))
-    count = row[2]
-    table_row = u'''| {0}
-| {1}
-| {2}
-|-'''.format(i, page_title, count)
-    output.append(table_row)
-    i += 1
-
-common.finishReport(db, cursor, site, report_name, report_template, [output], __file__)
+        cursor.close()
