@@ -16,61 +16,41 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import settings
-import common
+import reports
 
-report_name = u'Перенаправлення файлів, що не використовуються'
- 
-report_template = u'''
-Перенаправлення файлів, на які є щонайбільше одне посилання; дані станом на <onlyinclude>{0}</onlyinclude>.
- 
-{{| class="wikitable sortable plainlinks"
-|-
-! №
-! Сторінка
-! Використання файлу
-! Посилання
-|-
-{1}
-|}}
-'''
 
-sqlQuery = '''
-/* unused_file_redirects.py */
-SELECT ns_name, pg1.page_title,
-  (SELECT COUNT(*)
-  FROM imagelinks
-  WHERE il_to = page_title) AS imagelinks,
-  (SELECT COUNT(*)
-  FROM pagelinks
-  WHERE pl_namespace = 6
-    AND pl_title = page_title) AS links
-FROM page AS pg1
-JOIN toolserver.namespace
-ON dbname = "{0}"
-AND pg1.page_namespace = ns_id
-WHERE pg1.page_namespace = 6
-  AND pg1.page_is_redirect = 1
-HAVING imagelinks + links <= 1
-'''.format(settings.dbname)
+class report(reports.report):
+    def get_title(self):
+        return u'Перенаправлення файлів, що не використовуються'
 
-site, db, cursor = common.prepareEnvironment()
+    def get_preamble_template(self):
+        return u'Перенаправлення файлів, на які є щонайбільше одне посилання; дані станом на <onlyinclude>%s</onlyinclude>.'
 
-cursor.execute(sqlQuery)
- 
-i = 1
-output = []
-for row in cursor.fetchall():
-    page_title = u'<span class="plainlinks">[{{{{fullurl:{0}:{1}|redirect=no}}}} {2}]</span>'.format(
-        unicode(row[0], 'utf-8'), unicode(row[1], 'utf-8'), unicode(row[1], 'utf-8'))
-    imageLinks = row[2]
-    links = row[3]
-    table_row = u'''| {0}
-| {1}
-| {2}
-| {3}
-|-'''.format(i, page_title, imageLinks, links)
-    output.append(table_row)
-    i += 1
+    def get_table_columns(self):
+        return [u'Сторінка', u'Використань файлу', u'Посилань на файл']
 
-common.finishReport(db, cursor, site, report_name, report_template, [output], __file__)
+    def get_table_rows(self, conn):
+        cursor = conn.cursor()
+        cursor.execute('''
+        /* unused_file_redirects.py SLOW_OK */
+        SELECT
+            page_namespace,
+            page_title,
+            (SELECT COUNT(*)
+            FROM imagelinks
+            WHERE il_to = page_title) AS imagelinks,
+            (SELECT COUNT(*)
+            FROM pagelinks
+            WHERE pl_title = page_title) AS links
+        FROM page
+        WHERE
+            page_namespace = 6
+            AND page_is_redirect = 1
+        HAVING imagelinks + links <= 1;
+        ''')
+
+        for page_namespace, page_title, count1, count2 in cursor:
+            page_title = u'[[%s]]' % self.make_page_title(page_namespace, page_title)
+            yield [page_title, count1, count2]
+
+        cursor.close()
