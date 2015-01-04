@@ -35,7 +35,7 @@ class report(reports.report):
         /* unused_file_redirects.py SLOW_OK */
         SELECT
             page_namespace,
-            page_title,
+            CONVERT(page_title USING utf8),
             (SELECT COUNT(*)
             FROM imagelinks
             WHERE il_to = page_title) AS imagelinks,
